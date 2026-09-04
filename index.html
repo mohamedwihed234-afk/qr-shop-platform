@@ -1,605 +1,250 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>منصة QR للمحلات</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <style>
-    :root {
-      --primary: #0f766e;
-      --bg: #f1f5f9;
-      --card: #fff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Tajawal', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      -webkit-tap-highlight-color: transparent;
-    }
-    a { color: inherit; text-decoration: none; }
-    button, input, textarea, select { font-family: inherit; font-size: 15px; }
-    .hidden { display: none !important; }
-
-    /* Header */
-    .topbar {
-      background: #fff;
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
-    }
-    .logo {
-      width: 36px; height: 36px;
-      background: var(--primary);
-      color: #fff;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 800;
-    }
-    .topbar nav { display: flex; gap: 6px; flex-wrap: wrap; }
-    .topbar button, .topbar a.btn {
-      border: none;
-      background: #f1f5f9;
-      padding: 8px 12px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      color: var(--text);
-    }
-    .topbar button.primary, .btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .wrap { max-width: 520px; margin: 0 auto; padding: 16px 16px 40px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 14px;
-    }
-    h1 { font-size: 22px; margin-bottom: 6px; }
-    h2 { font-size: 17px; margin-bottom: 12px; color: var(--primary); }
-    .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .field { margin-bottom: 12px; }
-    label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-    input, textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      outline: none;
-      background: #fff;
-    }
-    input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,118,110,.15); }
-    input[dir="ltr"] { direction: ltr; text-align: left; }
-    textarea { min-height: 80px; resize: vertical; }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-gray { background: #e2e8f0; color: #334155; }
-    .btn-danger { background: #fee2e2; color: #b91c1c; }
-    .btn-purple { background: #7c3aed; color: #fff; }
-    .row { display: flex; gap: 8px; }
-    .row > * { flex: 1; }
-    .error {
-      background: #fef2f2;
-      color: #b91c1c;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-    .ok {
-      background: #ecfdf5;
-      color: #047857;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-    .shop-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .shop-item:last-child { border-bottom: none; }
-    .chip {
-      display: inline-block;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #dcfce7;
-      color: #166534;
-      font-weight: 700;
-    }
-    .chip.off { background: #f1f5f9; color: #64748b; }
-    .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .actions button, .actions a {
-      border: none;
-      background: #f1f5f9;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    /* Public shop page */
-    .shop-page { min-height: 100vh; background: linear-gradient(180deg, rgba(15,118,110,.12), #f8fafc 40%); }
-    .cover {
-      height: 150px;
-      background: linear-gradient(135deg, #0f766e, #14b8a6);
-      position: relative;
-    }
-    .avatar {
-      width: 92px; height: 92px;
-      border-radius: 20px;
-      background: #fff;
-      border: 4px solid #fff;
-      box-shadow: 0 8px 24px rgba(0,0,0,.12);
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: -46px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      font-size: 34px;
-      font-weight: 800;
-      color: var(--primary);
-    }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .shop-body { max-width: 420px; margin: 0 auto; padding: 60px 16px 40px; text-align: center; }
-    .shop-body h1 { font-size: 26px; margin-bottom: 8px; }
-    .action-btn {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 16px;
-      border-radius: 16px;
-      color: #fff;
-      font-weight: 700;
-      margin-bottom: 10px;
-      box-shadow: 0 4px 14px rgba(0,0,0,.12);
-    }
-    .action-btn .ico {
-      width: 46px; height: 46px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
-    .action-btn span { flex: 1; text-align: right; }
-
-    #qrCanvas, #qrBox canvas { max-width: 100%; border-radius: 12px; }
-    .center { text-align: center; }
-    .mt { margin-top: 12px; }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .stat {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-    }
-    .stat b { display: block; font-size: 22px; }
-    .stat span { font-size: 12px; color: var(--muted); }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>منصة QR للمحلات</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Tajawal,system-ui,sans-serif;background:#f1f5f9;color:#0f172a;min-height:100vh}
+.wrap{max-width:520px;margin:0 auto;padding:24px 16px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin-bottom:14px}
+.logo{width:56px;height:56px;background:#0f766e;color:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;margin:0 auto 12px}
+h1{font-size:22px;text-align:center;margin-bottom:8px}
+.muted{color:#64748b;font-size:13px;text-align:center;line-height:1.6}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;margin-top:12px}
+.btn-primary{background:#0f766e;color:#fff}
+.btn-gray{background:#e2e8f0;color:#334155}
+.error{background:#fef2f2;color:#b91c1c;padding:12px;border-radius:10px;font-size:13px;margin:12px 0}
+.ok{background:#ecfdf5;color:#047857;padding:12px;border-radius:10px;font-size:13px;margin:12px 0}
+.field{margin-bottom:12px;text-align:right}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,textarea{width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:12px;font-family:inherit;font-size:15px}
+input[dir=ltr]{direction:ltr;text-align:left}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.topbar button{border:none;background:#f1f5f9;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit}
+.topbar .p{background:#0f766e;color:#fff}
+.shop-item{padding:12px 0;border-bottom:1px solid #e2e8f0}
+.actions button,.actions a{border:none;background:#f1f5f9;padding:8px 10px;border-radius:8px;font-size:12px;font-weight:700;margin:4px 4px 0 0;cursor:pointer;font-family:inherit;display:inline-block}
+.action-btn{display:flex;align-items:center;gap:12px;width:100%;padding:16px;border-radius:16px;color:#fff;font-weight:700;margin-bottom:10px;text-decoration:none}
+.cover{height:140px;background:linear-gradient(135deg,#0f766e,#14b8a6);position:relative}
+.avatar{width:88px;height:88px;border-radius:20px;background:#fff;border:4px solid #fff;box-shadow:0 8px 20px rgba(0,0,0,.12);position:absolute;left:50%;transform:translateX(-50%);bottom:-44px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#0f766e}
+.shop-body{max-width:420px;margin:0 auto;padding:56px 16px 40px;text-align:center}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
+.stat b{display:block;font-size:22px}
+.chip{font-size:11px;padding:3px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-weight:700}
+</style>
 </head>
 <body>
-  <div id="app"></div>
+<div id="app">
+  <div class="wrap">
+    <div class="card">
+      <div class="logo">QR</div>
+      <h1>منصة QR للمحلات</h1>
+      <p class="muted">جاري التحميل...</p>
+    </div>
+  </div>
+</div>
 
-  <script>
-    // ========== CONFIG (مفاتيحك العامة فقط — آمنة في المتصفح مع RLS) ==========
-    const SUPABASE_URL = 'https://rjuicxufdrlcgnpvufrn.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqdWljeHVmZHJsY2ducHZ1ZnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MzUyNjIsImV4cCI6MjEwNDExMTI2Mn0.fUj9xV3b8-6R2Z21C6v4L5o7o0W1p4A8v9c2S2X1Y1Z';
-    // إذا فشل الدخول: من Supabase → Settings → API → Legacy anon key انسخه هنا مكان المفتاح أعلاه
+<script>
+const SUPABASE_URL = 'https://rjuicxufdrlcgnpvufrn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqdWljeHVmZHJsY2ducHZ1ZnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MzUyNjIsImV4cCI6MjEwNDExMTI2Mn0.ljKGFYVxhlYq1n7vC9STiu3knn1tXrzppOEodUx6A9g';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const app = document.getElementById('app');
-    let currentUser = null;
-    let editingId = null;
+const app = document.getElementById('app');
+let sb = null, user = null, editId = null;
 
-    function route() {
-      const hash = location.hash || '#/';
-      const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
-      if (parts[0] === 'shop' && parts[1]) return renderPublicShop(parts[1]);
-      if (parts[0] === 'admin') {
-        if (!currentUser) return renderLogin();
-        if (parts[1] === 'new') return renderShopForm(null);
-        if (parts[1] === 'edit' && parts[2]) return renderShopForm(parts[2]);
-        if (parts[1] === 'qr' && parts[2]) return renderQR(parts[2]);
-        return renderDashboard();
-      }
-      // default
-      if (currentUser) location.hash = '#/admin';
-      else renderHome();
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
+function $(id){return document.getElementById(id);}
+
+function home(msg){
+  app.innerHTML = `<div class="wrap"><div class="card">
+    <div class="logo">QR</div>
+    <h1>منصة QR للمحلات</h1>
+    <p class="muted">صفحات و QR Codes للمحلات في ليبيا</p>
+    ${msg?`<div class="error">${esc(msg)}</div>`:''}
+    <button class="btn btn-primary" onclick="location.hash='#/admin'">دخول لوحة التحكم</button>
+  </div></div>`;
+}
+
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('فشل تحميل المكتبة'));
+    document.head.appendChild(s);
+  });
+}
+
+async function boot(){
+  try{
+    if(!SUPABASE_ANON_KEY){
+      home('يجب وضع مفتاح Legacy anon داخل الملف ثم أعد الرفع.');
+      return;
     }
-
-    function renderHome() {
-      app.innerHTML = `
-        <div class="wrap" style="padding-top:40px">
-          <div class="card center">
-            <div class="logo" style="margin:0 auto 12px;width:56px;height:56px;font-size:18px">QR</div>
-            <h1>منصة QR للمحلات</h1>
-            <p class="muted mt">إنشاء صفحات و QR Codes للمحلات في ليبيا</p>
-            <button class="btn btn-primary mt" onclick="location.hash='#/admin'">دخول لوحة التحكم</button>
-          </div>
-        </div>`;
-    }
-
-    function renderLogin() {
-      app.innerHTML = `
-        <div class="wrap" style="padding-top:40px">
-          <div class="card">
-            <div class="center">
-              <div class="logo" style="margin:0 auto 12px">QR</div>
-              <h1>لوحة التحكم</h1>
-              <p class="muted">للإدارة فقط</p>
-            </div>
-            <div id="loginError" class="error hidden"></div>
-            <form id="loginForm" class="mt">
-              <div class="field">
-                <label>البريد</label>
-                <input id="email" type="email" dir="ltr" required placeholder="mwihed42@gmail.com" />
-              </div>
-              <div class="field">
-                <label>كلمة المرور</label>
-                <input id="password" type="password" dir="ltr" required />
-              </div>
-              <button class="btn btn-primary" type="submit">تسجيل الدخول</button>
-            </form>
-          </div>
-        </div>`;
-      document.getElementById('loginForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const err = document.getElementById('loginError');
-        err.classList.add('hidden');
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          err.textContent = 'فشل الدخول. تأكد من البريد وكلمة المرور، ومن مفتاح anon في الإعدادات.';
-          err.classList.remove('hidden');
-          return;
-        }
-        currentUser = data.user;
-        location.hash = '#/admin';
-      };
-    }
-
-    async function renderDashboard() {
-      app.innerHTML = `<div class="topbar"><div class="brand"><div class="logo">QR</div><span>لوحة التحكم</span></div>
-        <nav>
-          <button class="primary" onclick="location.hash='#/admin/new'">+ محل</button>
-          <button onclick="logout()">خروج</button>
-        </nav></div>
-        <div class="wrap"><div class="card center muted">جاري التحميل...</div></div>`;
-
-      const { data: shops, error } = await supabase.from('shops').select('*').order('created_at', { ascending: false });
-      if (error) {
-        app.querySelector('.wrap').innerHTML = `<div class="error">خطأ في جلب المحلات: ${error.message}<br/>تأكد أن SQL نُفّذ وأن RLS يسمح للمستخدم المسجّل.</div>`;
-        return;
-      }
-
-      const { data: events } = await supabase.from('analytics_events').select('event_type, shop_id');
-      const views = {};
-      let totalViews = 0;
-      (events || []).forEach(e => {
-        if (e.event_type === 'page_view') {
-          views[e.shop_id] = (views[e.shop_id] || 0) + 1;
-          totalViews++;
-        }
-      });
-
-      const list = (shops || []).map(s => `
-        <div class="shop-item">
-          <div style="flex:1">
-            <b>${escapeHtml(s.name)}</b>
-            <div class="muted">/shop/${escapeHtml(s.slug)} · زيارات: ${views[s.id] || 0}</div>
-            <span class="chip ${s.status === 'active' ? '' : 'off'}">${s.status === 'active' ? 'نشط' : 'معطل'}</span>
-            <div class="actions">
-              <a href="#/shop/${encodeURIComponent(s.slug)}" target="_blank">فتح</a>
-              <button onclick="location.hash='#/admin/qr/${encodeURIComponent(s.slug)}'">QR</button>
-              <button onclick="location.hash='#/admin/edit/${s.id}'">تعديل</button>
-              <button onclick="toggleShop('${s.id}','${s.status}')">${s.status === 'active' ? 'تعطيل' : 'تفعيل'}</button>
-              <button onclick="deleteShop('${s.id}','${escapeHtml(s.name).replace(/'/g,"\\'")}')">حذف</button>
-            </div>
-          </div>
-        </div>`).join('') || '<p class="muted">لا توجد محلات بعد. اضغط + محل</p>';
-
-      app.querySelector('.wrap').innerHTML = `
-        <div class="stats-grid">
-          <div class="stat"><b>${(shops || []).length}</b><span>المحلات</span></div>
-          <div class="stat"><b>${totalViews}</b><span>إجمالي الزيارات</span></div>
-        </div>
-        <div class="card mt"><h2>المحلات</h2>${list}</div>`;
-    }
-
-    async function renderShopForm(id) {
-      editingId = id;
-      let shop = {
-        name: '', description: '', phone: '', whatsapp: '',
-        instagram_url: '', facebook_url: '', snapchat_url: '', tiktok_url: '',
-        google_maps_url: '', google_review_url: '', menu_url: '',
-        address: '', opening_hours: '', logo_url: '', cover_url: '',
-        primary_color: '#0f766e', secondary_color: '#14b8a6', status: 'active'
-      };
-      if (id) {
-        const { data } = await supabase.from('shops').select('*').eq('id', id).single();
-        if (data) shop = data;
-      }
-
-      app.innerHTML = `
-        <div class="topbar"><div class="brand"><div class="logo">QR</div><span>${id ? 'تعديل محل' : 'إضافة محل'}</span></div>
-          <nav><button onclick="location.hash='#/admin'">رجوع</button></nav></div>
-        <div class="wrap">
-          <div id="formMsg"></div>
-          <form id="shopForm" class="card">
-            <p class="muted" style="margin-bottom:12px">اسم المحل مطلوب. باقي الحقول اختيارية — إذا تركت رابطاً فارغاً لن يظهر زرّه للزبون.</p>
-            ${field('name', 'اسم المحل *', shop.name, false, true)}
-            ${field('description', 'وصف', shop.description || '', true)}
-            ${field('whatsapp', 'رقم الواتساب', shop.whatsapp || '', false, false, true)}
-            ${field('phone', 'الهاتف', shop.phone || '', false, false, true)}
-            ${field('snapchat_url', 'رابط سناب', shop.snapchat_url || '', false, false, true)}
-            ${field('tiktok_url', 'رابط تيك توك', shop.tiktok_url || '', false, false, true)}
-            ${field('instagram_url', 'رابط إنستغرام', shop.instagram_url || '', false, false, true)}
-            ${field('facebook_url', 'رابط فيسبوك', shop.facebook_url || '', false, false, true)}
-            ${field('google_maps_url', 'Google Maps', shop.google_maps_url || '', false, false, true)}
-            ${field('google_review_url', 'تقييم Google', shop.google_review_url || '', false, false, true)}
-            ${field('menu_url', 'رابط المنيو', shop.menu_url || '', false, false, true)}
-            ${field('address', 'العنوان', shop.address || '')}
-            ${field('opening_hours', 'أوقات العمل', shop.opening_hours || '')}
-            ${field('logo_url', 'رابط الشعار', shop.logo_url || '', false, false, true)}
-            ${field('cover_url', 'رابط الغلاف', shop.cover_url || '', false, false, true)}
-            <div class="row">
-              <div class="field"><label>اللون الرئيسي</label><input type="color" id="primary_color" value="${shop.primary_color || '#0f766e'}" /></div>
-              <div class="field"><label>اللون الثانوي</label><input type="color" id="secondary_color" value="${shop.secondary_color || '#14b8a6'}" /></div>
-            </div>
-            <button class="btn btn-primary" type="submit">${id ? 'حفظ التعديلات' : 'إنشاء المحل'}</button>
-          </form>
-        </div>`;
-
-      document.getElementById('shopForm').onsubmit = saveShop;
-    }
-
-    function field(id, label, value, ta = false, required = false, ltr = false) {
-      if (ta) return `<div class="field"><label>${label}</label><textarea id="${id}">${escapeHtml(value || '')}</textarea></div>`;
-      return `<div class="field"><label>${label}</label><input id="${id}" value="${escapeHtml(value || '')}" ${required ? 'required' : ''} ${ltr ? 'dir="ltr"' : ''} /></div>`;
-    }
-
-    function slugify(name) {
-      const map = {'ا':'a','أ':'a','إ':'i','آ':'a','ب':'b','ت':'t','ث':'th','ج':'j','ح':'h','خ':'kh','د':'d','ذ':'dh','ر':'r','ز':'z','س':'s','ش':'sh','ص':'s','ض':'d','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'q','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','و':'w','ي':'y','ى':'a','ة':'h','ء':'',' ':'-'};
-      let s = name.trim().toLowerCase().split('').map(c => map[c] || c).join('');
-      s = s.replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
-      return s || 'shop';
-    }
-
-    async function saveShop(e) {
-      e.preventDefault();
-      const msg = document.getElementById('formMsg');
-      const name = document.getElementById('name').value.trim();
-      if (!name) return;
-
-      const payload = {
-        name,
-        description: val('description'),
-        phone: val('phone'),
-        whatsapp: val('whatsapp'),
-        instagram_url: val('instagram_url'),
-        facebook_url: val('facebook_url'),
-        snapchat_url: val('snapchat_url'),
-        tiktok_url: val('tiktok_url'),
-        google_maps_url: val('google_maps_url'),
-        google_review_url: val('google_review_url'),
-        menu_url: val('menu_url'),
-        address: val('address'),
-        opening_hours: val('opening_hours'),
-        logo_url: val('logo_url'),
-        cover_url: val('cover_url'),
-        primary_color: document.getElementById('primary_color').value,
-        secondary_color: document.getElementById('secondary_color').value,
-        status: 'active'
-      };
-
-      let error;
-      if (editingId) {
-        ({ error } = await supabase.from('shops').update(payload).eq('id', editingId));
-      } else {
-        let slug = slugify(name);
-        const { data: exists } = await supabase.from('shops').select('id').eq('slug', slug).maybeSingle();
-        if (exists) slug = slug + '-' + Date.now().toString().slice(-4);
-        payload.slug = slug;
-        ({ error } = await supabase.from('shops').insert(payload));
-      }
-
-      if (error) {
-        msg.innerHTML = `<div class="error">${error.message}</div>`;
-        return;
-      }
-      msg.innerHTML = `<div class="ok">تم الحفظ بنجاح</div>`;
-      setTimeout(() => location.hash = '#/admin', 700);
-    }
-
-    function val(id) {
-      const v = document.getElementById(id).value.trim();
-      return v || null;
-    }
-
-    async function renderQR(slug) {
-      const { data: shop } = await supabase.from('shops').select('*').eq('slug', slug).single();
-      if (!shop) {
-        app.innerHTML = `<div class="wrap"><div class="error">المحل غير موجود</div></div>`;
-        return;
-      }
-      const url = `${location.origin}${location.pathname}#/shop/${shop.slug}`;
-      app.innerHTML = `
-        <div class="topbar"><div class="brand"><div class="logo">QR</div><span>QR — ${escapeHtml(shop.name)}</span></div>
-          <nav><button onclick="location.hash='#/admin'">رجوع</button></nav></div>
-        <div class="wrap center">
-          <div class="card">
-            <p class="muted" style="direction:ltr;margin-bottom:12px">${escapeHtml(url)}</p>
-            <div id="qrBox" style="display:flex;justify-content:center"></div>
-            <div class="row mt">
-              <button class="btn btn-primary" onclick="downloadQR('${escapeHtml(shop.slug)}')">تحميل PNG</button>
-              <button class="btn btn-gray" onclick="copyText('${escapeHtml(url)}')">نسخ الرابط</button>
-            </div>
-            <a class="btn btn-purple mt" href="#/shop/${encodeURIComponent(shop.slug)}">فتح صفحة المحل</a>
-          </div>
-        </div>`;
-      QRCode.toCanvas(document.createElement('canvas'), url, { width: 260, margin: 2 }, function (err, canvas) {
-        if (err) return;
-        canvas.id = 'qrCanvas';
-        document.getElementById('qrBox').appendChild(canvas);
-      });
-    }
-
-    function downloadQR(slug) {
-      const canvas = document.getElementById('qrCanvas');
-      if (!canvas) return;
-      const a = document.createElement('a');
-      a.download = 'qr-' + slug + '.png';
-      a.href = canvas.toDataURL('image/png');
-      a.click();
-    }
-
-    async function renderPublicShop(slug) {
-      const { data: shop, error } = await supabase.from('shops').select('*').eq('slug', slug).eq('status', 'active').single();
-      if (error || !shop) {
-        app.innerHTML = `<div class="wrap center" style="padding-top:60px"><h1>المحل غير موجود</h1><p class="muted">أو تم تعطيله</p></div>`;
-        return;
-      }
-
-      // track page view
-      supabase.from('analytics_events').insert({
-        shop_id: shop.id,
-        event_type: 'page_view',
-        device_type: /mobile|android|iphone/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
-      }).then(() => {});
-
-      const buttons = [];
-      const add = (cond, label, ico, href, color, event) => {
-        if (!cond) return;
-        buttons.push(`<a class="action-btn" style="background:${color}" href="${href}" target="_blank" rel="noopener"
-          onclick="track('${shop.id}','${event}')"><div class="ico">${ico}</div><span>${label}</span></a>`);
-      };
-
-      add(shop.google_review_url, 'قيّم تجربتك على Google', '⭐', shop.google_review_url, '#f59e0b', 'google_click');
-      add(shop.whatsapp, 'تواصل على واتساب', '💬', waLink(shop.whatsapp), '#22c55e', 'whatsapp_click');
-      add(shop.phone, 'اتصل بنا', '📞', telLink(shop.phone), '#3b82f6', 'phone_click');
-      add(shop.instagram_url, 'إنستغرام', '📸', shop.instagram_url, '#e1306c', 'instagram_click');
-      add(shop.facebook_url, 'فيسبوك', '📘', shop.facebook_url, '#1877f2', 'facebook_click');
-      add(shop.snapchat_url, 'سناب شات', '👻', shop.snapchat_url, '#fffc00', 'snapchat_click');
-      add(shop.tiktok_url, 'تيك توك', '🎵', shop.tiktok_url, '#000', 'tiktok_click');
-      add(shop.google_maps_url, 'موقعنا على الخريطة', '📍', shop.google_maps_url, '#ef4444', 'maps_click');
-      add(shop.menu_url, 'المنيو', '📋', shop.menu_url, '#8b5cf6', 'menu_click');
-
-      app.innerHTML = `
-        <div class="shop-page">
-          <div class="cover" style="background:linear-gradient(135deg,${shop.primary_color || '#0f766e'},${shop.secondary_color || '#14b8a6'})">
-            <div class="avatar">${shop.logo_url ? `<img src="${escapeHtml(shop.logo_url)}" alt="">` : escapeHtml((shop.name || 'م')[0])}</div>
-          </div>
-          <div class="shop-body">
-            <h1>${escapeHtml(shop.name)}</h1>
-            ${shop.description ? `<p class="muted">${escapeHtml(shop.description)}</p>` : ''}
-            ${shop.address ? `<p class="muted mt">📍 ${escapeHtml(shop.address)}</p>` : ''}
-            ${shop.opening_hours ? `<p class="muted">🕐 ${escapeHtml(shop.opening_hours)}</p>` : ''}
-            <div class="mt">${buttons.join('') || '<p class="muted">لا توجد روابط</p>'}</div>
-            <p class="muted mt" style="font-size:11px">مدعوم بواسطة منصة QR للمحلات</p>
-          </div>
-        </div>`;
-    }
-
-    function track(shopId, eventType) {
-      supabase.from('analytics_events').insert({
-        shop_id: shopId,
-        event_type: eventType,
-        device_type: /mobile|android|iphone/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
-      }).then(() => {});
-    }
-
-    function waLink(phone) {
-      let n = String(phone).replace(/\D/g, '');
-      if (n.startsWith('0')) n = '218' + n.slice(1);
-      if (n.length <= 10) n = '218' + n;
-      return 'https://wa.me/' + n;
-    }
-    function telLink(phone) {
-      let n = String(phone).replace(/\D/g, '');
-      if (n.startsWith('0')) n = '+218' + n.slice(1);
-      else if (!n.startsWith('218')) n = '+218' + n;
-      else n = '+' + n;
-      return 'tel:' + n;
-    }
-
-    async function toggleShop(id, status) {
-      const next = status === 'active' ? 'inactive' : 'active';
-      await supabase.from('shops').update({ status: next }).eq('id', id);
-      renderDashboard();
-    }
-    async function deleteShop(id, name) {
-      if (!confirm('حذف المحل: ' + name + ' ؟')) return;
-      await supabase.from('shops').delete().eq('id', id);
-      renderDashboard();
-    }
-    async function logout() {
-      await supabase.auth.signOut();
-      currentUser = null;
-      location.hash = '#/';
-    }
-    function copyText(t) {
-      navigator.clipboard.writeText(t);
-      alert('تم نسخ الرابط');
-    }
-    function escapeHtml(s) {
-      return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
-    // init session
-    supabase.auth.getSession().then(({ data }) => {
-      currentUser = data.session?.user || null;
-      route();
-    });
+    await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+    if(!window.supabase){ home('تعذر تحميل Supabase. جرّب شبكة أخرى.'); return; }
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data, error } = await sb.auth.getSession();
+    if(error) console.warn(error);
+    user = data && data.session ? data.session.user : null;
     window.addEventListener('hashchange', route);
-  </script>
+    route();
+  }catch(e){
+    home('خطأ: ' + (e.message||e));
+  }
+}
+
+function route(){
+  const p = (location.hash||'#/').replace(/^#\/?/,'').split('/').filter(Boolean);
+  if(p[0]==='shop' && p[1]) return publicShop(p[1]);
+  if(p[0]==='admin'){
+    if(!user) return login();
+    if(p[1]==='new') return form(null);
+    if(p[1]==='edit' && p[2]) return form(p[2]);
+    if(p[1]==='qr' && p[2]) return qrPage(p[2]);
+    return dash();
+  }
+  if(user) location.hash='#/admin'; else home();
+}
+
+function login(){
+  app.innerHTML = `<div class="wrap"><div class="card">
+    <div class="logo">QR</div><h1>لوحة التحكم</h1>
+    <div id="err" class="error" style="display:none"></div>
+    <div class="field"><label>البريد</label><input id="email" dir="ltr" value="mwihed42@gmail.com"/></div>
+    <div class="field"><label>كلمة المرور</label><input id="pass" type="password" dir="ltr"/></div>
+    <button class="btn btn-primary" id="go">تسجيل الدخول</button>
+  </div></div>`;
+  $('go').onclick = async ()=>{
+    const { data, error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('pass').value });
+    if(error){ $('err').style.display='block'; $('err').textContent=error.message; return; }
+    user = data.user; location.hash='#/admin';
+  };
+}
+
+async function dash(){
+  app.innerHTML = `<div class="topbar"><div style="font-weight:800">لوحة التحكم</div>
+    <div><button class="p" onclick="location.hash='#/admin/new'">+ محل</button>
+    <button onclick="logout()">خروج</button></div></div>
+    <div class="wrap" id="c"><div class="card muted">جاري التحميل...</div></div>`;
+  const { data: shops, error } = await sb.from('shops').select('*').order('created_at',{ascending:false});
+  if(error){ $('c').innerHTML=`<div class="error">${esc(error.message)}</div>`; return; }
+  const { data: ev } = await sb.from('analytics_events').select('event_type,shop_id');
+  const views={}; let tv=0;
+  (ev||[]).forEach(e=>{ if(e.event_type==='page_view'){ views[e.shop_id]=(views[e.shop_id]||0)+1; tv++; }});
+  const list=(shops||[]).map(s=>`<div class="shop-item">
+    <b>${esc(s.name)}</b>
+    <div class="muted" style="text-align:right">#/shop/${esc(s.slug)} · ${views[s.id]||0} زيارة</div>
+    <span class="chip">${s.status==='active'?'نشط':'معطل'}</span>
+    <div class="actions">
+      <a href="#/shop/${encodeURIComponent(s.slug)}">فتح</a>
+      <button onclick="location.hash='#/admin/qr/${encodeURIComponent(s.slug)}'">QR</button>
+      <button onclick="location.hash='#/admin/edit/${s.id}'">تعديل</button>
+      <button onclick="del('${s.id}')">حذف</button>
+    </div></div>`).join('')||'<p class="muted">لا توجد محلات</p>';
+  $('c').innerHTML = `<div class="stats"><div class="stat"><b>${(shops||[]).length}</b><span class="muted">محلات</span></div>
+    <div class="stat"><b>${tv}</b><span class="muted">زيارات</span></div></div>
+    <div class="card"><h2 style="color:#0f766e;margin-bottom:8px">المحلات</h2>${list}</div>`;
+}
+
+function field(id,lab,val,ltr){
+  return `<div class="field"><label>${lab}</label><input id="${id}" value="${esc(val||'')}" ${ltr?'dir=ltr':''}/></div>`;
+}
+
+async function form(id){
+  editId=id;
+  let s={name:'',description:'',whatsapp:'',phone:'',snapchat_url:'',tiktok_url:'',instagram_url:'',facebook_url:'',google_maps_url:'',google_review_url:'',menu_url:'',address:'',opening_hours:''};
+  if(id){ const {data}=await sb.from('shops').select('*').eq('id',id).single(); if(data) s=data; }
+  app.innerHTML=`<div class="topbar"><div style="font-weight:800">${id?'تعديل':'إضافة محل'}</div>
+    <button onclick="location.hash='#/admin'">رجوع</button></div>
+    <div class="wrap"><div id="msg"></div><div class="card">
+    ${field('name','اسم المحل *',s.name)}
+    ${field('description','وصف',s.description)}
+    ${field('whatsapp','واتساب',s.whatsapp,1)}
+    ${field('phone','هاتف',s.phone,1)}
+    ${field('snapchat_url','سناب',s.snapchat_url,1)}
+    ${field('tiktok_url','تيك توك',s.tiktok_url,1)}
+    ${field('instagram_url','إنستغرام',s.instagram_url,1)}
+    ${field('facebook_url','فيسبوك',s.facebook_url,1)}
+    ${field('google_maps_url','Maps',s.google_maps_url,1)}
+    ${field('google_review_url','تقييم Google',s.google_review_url,1)}
+    ${field('menu_url','منيو',s.menu_url,1)}
+    ${field('address','عنوان',s.address)}
+    <button class="btn btn-primary" id="save">${id?'حفظ':'إنشاء'}</button>
+    </div></div>`;
+  $('save').onclick=save;
+}
+
+function slugify(n){
+  const m={'ا':'a','أ':'a','إ':'i','ب':'b','ت':'t','ج':'j','ح':'h','د':'d','ر':'r','ز':'z','س':'s','ش':'sh','ع':'a','ف':'f','ق':'q','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','و':'w','ي':'y','ة':'h',' ':'-'};
+  return (n||'').trim().toLowerCase().split('').map(c=>m[c]||c).join('').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-')||'shop';
+}
+
+async function save(){
+  const name=$('name').value.trim(); if(!name) return;
+  const payload={
+    name, description:gv('description'), whatsapp:gv('whatsapp'), phone:gv('phone'),
+    snapchat_url:gv('snapchat_url'), tiktok_url:gv('tiktok_url'), instagram_url:gv('instagram_url'),
+    facebook_url:gv('facebook_url'), google_maps_url:gv('google_maps_url'),
+    google_review_url:gv('google_review_url'), menu_url:gv('menu_url'), address:gv('address'),
+    status:'active', primary_color:'#0f766e', secondary_color:'#14b8a6'
+  };
+  let error;
+  if(editId){ ({error}=await sb.from('shops').update(payload).eq('id',editId)); }
+  else {
+    let slug=slugify(name);
+    const {data:ex}=await sb.from('shops').select('id').eq('slug',slug).maybeSingle();
+    if(ex) slug+='-'+Date.now().toString().slice(-4);
+    payload.slug=slug;
+    ({error}=await sb.from('shops').insert(payload));
+  }
+  if(error){ $('msg').innerHTML=`<div class="error">${esc(error.message)}</div>`; return; }
+  $('msg').innerHTML=`<div class="ok">تم الحفظ</div>`;
+  setTimeout(()=>location.hash='#/admin',500);
+}
+function gv(id){ const x=$(id).value.trim(); return x||null; }
+
+async function qrPage(slug){
+  const {data:s}=await sb.from('shops').select('*').eq('slug',slug).single();
+  if(!s){ app.innerHTML='<div class="wrap"><div class="error">غير موجود</div></div>'; return; }
+  const url=location.origin+location.pathname+'#/shop/'+s.slug;
+  app.innerHTML=`<div class="topbar"><div style="font-weight:800">QR</div>
+    <button onclick="location.hash='#/admin'">رجوع</button></div>
+    <div class="wrap"><div class="card" style="text-align:center">
+    <p class="muted" style="direction:ltr">${esc(url)}</p>
+    <img id="qri" alt="QR" style="margin:12px auto;width:240px;height:240px"/>
+    <button class="btn btn-gray" onclick="navigator.clipboard.writeText('${esc(url)}');alert('تم النسخ')">نسخ الرابط</button>
+    <a class="btn btn-primary" href="#/shop/${encodeURIComponent(s.slug)}">فتح الصفحة</a>
+    </div></div>`;
+  $('qri').src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&data='+encodeURIComponent(url);
+}
+
+async function publicShop(slug){
+  const {data:s,error}=await sb.from('shops').select('*').eq('slug',slug).eq('status','active').single();
+  if(error||!s){ app.innerHTML='<div class="wrap"><div class="card"><h1>غير موجود</h1></div></div>'; return; }
+  sb.from('analytics_events').insert({shop_id:s.id,event_type:'page_view',device_type:'mobile'}).then(()=>{});
+  const btns=[];
+  const add=(c,l,i,h,col)=>{ if(!c)return; btns.push(`<a class="action-btn" style="background:${col}" href="${h}" target="_blank">${i} ${l}</a>`); };
+  add(s.google_review_url,'قيّم على Google','⭐',s.google_review_url,'#f59e0b');
+  if(s.whatsapp){ let n=String(s.whatsapp).replace(/\\D/g,''); if(n.startsWith('0'))n='218'+n.slice(1); if(n.length<=10)n='218'+n; add(1,'واتساب','💬','https://wa.me/'+n,'#22c55e'); }
+  if(s.phone){ let n=String(s.phone).replace(/\\D/g,''); if(n.startsWith('0'))n='+218'+n.slice(1); add(1,'اتصل','📞','tel:'+n,'#3b82f6'); }
+  add(s.instagram_url,'إنستغرام','📸',s.instagram_url,'#e1306c');
+  add(s.facebook_url,'فيسبوك','📘',s.facebook_url,'#1877f2');
+  add(s.snapchat_url,'سناب','👻',s.snapchat_url,'#fffc00');
+  add(s.tiktok_url,'تيك توك','🎵',s.tiktok_url,'#111');
+  add(s.google_maps_url,'الخريطة','📍',s.google_maps_url,'#ef4444');
+  add(s.menu_url,'المنيو','📋',s.menu_url,'#8b5cf6');
+  app.innerHTML=`<div class="cover"><div class="avatar">${esc((s.name||'م')[0])}</div></div>
+    <div class="shop-body"><h1>${esc(s.name)}</h1>
+    ${s.description?`<p class="muted">${esc(s.description)}</p>`:''}
+    <div style="margin-top:16px">${btns.join('')||'<p class="muted">لا روابط</p>'}</div></div>`;
+}
+
+async function del(id){ if(!confirm('حذف؟'))return; await sb.from('shops').delete().eq('id',id); dash(); }
+async function logout(){ await sb.auth.signOut(); user=null; location.hash='#/'; }
+
+boot();
+</script>
 </body>
 </html>
